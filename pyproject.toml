@@ -1,0 +1,20 @@
+[project]
+name = "server-stt"
+version = "0.1.0"
+description = "Local file transcription with speaker labels on Linux servers"
+requires-python = ">=3.12"
+dependencies = ["faster-whisper==1.2.1", "av>=11,<17", "sherpa-onnx==1.12.26", "sherpa-onnx-core==1.12.26", "pydantic>=2,<3"]
+
+[project.scripts]
+server-stt = "server_stt.cli:main"
+server-stt-models = "server_stt.models:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["ruff", "basedpyright"]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
