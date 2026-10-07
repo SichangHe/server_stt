@@ -8,6 +8,8 @@ The current default uses Qwen3-ASR-1.7B, generated-text alignment, and Nemotron-
 
 The previous Whisper/Sherpa pipeline had 73/212 word edits and 99/212 speaker-attributed edits on the first crop; 50/238 and 59/238 on the second. The first baseline supplied the known four-speaker count; the second estimated it. The new pipeline inferred four speakers on both. These improvements do not establish general meeting accuracy: both crops come from one meeting and simultaneous voices remain the main source of missing words. Reference transcripts are read only by evaluation, never by inference or alignment.
 
+An independent meeting, AMI EN2002a Mix-Headset seconds 300–390, produced 313 words against 366 normalized reference words: 87 word edits (23.77%) and 97 speaker-attributed edits (26.50%), with four inferred speakers. No reference transcript or known speaker count was supplied to inference. This confirms substantial remaining meeting errors. [Source audio](https://huggingface.co/datasets/FluidInference/ami-corpus-mirror/resolve/main/sdm/EN2002a.Mix-Headset.wav) SHA-256: `a15017d0d3c871866971ee178052a0ce3a7e44d6fbf89fc23dcab326511b65f5`; annotations use the same official archive as the ES2004a fixture.
+
 Reproduce the current pipeline:
 
 ```sh
