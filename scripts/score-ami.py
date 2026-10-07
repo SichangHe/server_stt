@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+import meeteval
+
 from server_stt.cli import Transcript
 
 
@@ -32,6 +34,28 @@ def main() -> None:
     observed = [
         normalize(word.text) for word in transcript.words if normalize(word.text)
     ]
+    reference_segments = [
+        {
+            "session_id": "ami",
+            "speaker": row["speaker"],
+            "words": normalize(row["word"]),
+            "start_time": float(row["start_s"]),
+            "end_time": float(row["end_s"]),
+        }
+        for row in reference
+    ]
+    hypothesis_segments = [
+        {
+            "session_id": "ami",
+            "speaker": word.speaker or "unknown",
+            "words": normalize(word.text),
+            "start_time": word.start_s,
+            "end_time": word.end_s,
+        }
+        for word in transcript.words
+        if normalize(word.text)
+    ]
+    cpwer = meeteval.wer.cpwer(reference_segments, hypothesis_segments)["ami"]
     previous = list(range(len(observed) + 1))
     for i, word in enumerate(expected, start=1):
         current = [i]
@@ -79,12 +103,14 @@ def main() -> None:
                 "hypothesis_words": len(observed),
                 "word_edit_errors": previous[-1],
                 "word_error_fraction": previous[-1] / len(expected),
+                "speaker_attributed_word_edit_errors": cpwer.errors,
+                "speaker_attributed_word_error_fraction": cpwer.error_rate,
                 "speaker_labels": labels,
                 "best_speaker_mapping": best_mapping,
                 "reference_words_with_duration": len(assignments),
                 "correct_word_time_speakers": best_correct,
                 "word_time_speaker_error_fraction": 1 - best_correct / len(assignments),
-                "limitations": "Single 90-second crop. WER orders simultaneous speakers by onset. Speaker score uses reference word times, not ASR alignment; it is not DER.",
+                "limitations": "Single crop. WER orders simultaneous speakers by onset. cpWER measures recognized words and their speaker labels jointly. Word-time speaker score breaks overlap ties arbitrarily; it is not DER.",
             },
             indent=2,
         )

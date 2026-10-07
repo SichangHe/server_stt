@@ -35,3 +35,7 @@ limitations
 - estimated speaker count can overcluster
 - overlapping words cannot carry multiple recognized voices
 - transcription accuracy requires reference evaluation
+
+optional native backend
+- [native diarization](native-diarization.md)
+  - CPU runtime, posterior word attribution, distribution, and limits

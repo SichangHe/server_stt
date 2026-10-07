@@ -3,6 +3,7 @@
 import argparse
 import csv
 import hashlib
+import math
 import subprocess
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -24,7 +25,15 @@ SOURCES = {
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--start-s", type=float, default=300)
+    parser.add_argument("--duration-s", type=float, default=90)
     args = parser.parse_args()
+    if not math.isfinite(args.start_s) or args.start_s < 0:
+        parser.error("start must be finite and nonnegative")
+    if not math.isfinite(args.duration_s) or args.duration_s <= 0:
+        parser.error("duration must be finite and positive")
+    clip_end_s = args.start_s + args.duration_s
+    stem = f"ES2004a-{args.start_s:g}-{clip_end_s:g}"
     args.directory.mkdir(parents=True, exist_ok=True)
     for name, (url, digest) in SOURCES.items():
         path = args.directory / name
@@ -41,7 +50,7 @@ def main() -> None:
             actual = hashlib.file_digest(source, "sha256").hexdigest()
         if actual != digest:
             parser.error(f"Checksum mismatch: remove {path} and retry")
-    wav = args.directory / "ES2004a-300-390.wav"
+    wav = args.directory / f"{stem}.wav"
     subprocess.run(
         [
             "ffmpeg",
@@ -51,9 +60,9 @@ def main() -> None:
             "-i",
             str(args.directory / "ES2004a.Mix-Headset.wav"),
             "-ss",
-            "300",
+            str(args.start_s),
             "-t",
-            "90",
+            str(args.duration_s),
             "-ar",
             "16000",
             "-ac",
@@ -75,7 +84,7 @@ def main() -> None:
             "libmp3lame",
             "-q:a",
             "3",
-            str(args.directory / "ES2004a-300-390.mp3"),
+            str(args.directory / f"{stem}.mp3"),
         ],
         check=True,
         timeout=60,
@@ -89,9 +98,14 @@ def main() -> None:
                     float(word.attrib["starttime"]),
                     float(word.attrib["endtime"]),
                 )
-                if 300 <= start_s < 390:
+                if args.start_s <= start_s < clip_end_s:
                     words.append(
-                        (start_s - 300, min(end_s, 390) - 300, speaker, word.text or "")
+                        (
+                            start_s - args.start_s,
+                            min(end_s, clip_end_s) - args.start_s,
+                            speaker,
+                            word.text or "",
+                        )
                     )
     with (args.directory / "reference.tsv").open(
         "w", newline="", encoding="utf-8"
@@ -99,7 +113,9 @@ def main() -> None:
         writer = csv.writer(target, delimiter="\t")
         writer.writerow(("start_s", "end_s", "speaker", "word"))
         writer.writerows(sorted(words))
-    print(f"{len(words)} reference entries and 90-second WAV/MP3 in {args.directory}")
+    print(
+        f"{len(words)} reference entries and {args.duration_s:g}-second WAV/MP3 in {args.directory}"
+    )
 
 
 if __name__ == "__main__":
