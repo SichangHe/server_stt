@@ -162,15 +162,23 @@ def recognize(
                     for word in timestamp_words:
                         start_s = offset_s + float(word["start_offset"]) * frame_s
                         word_end_s = offset_s + float(word["end_offset"]) * frame_s
-                        if not 0 <= start_s <= word_end_s <= end_s + frame_s:
+                        beyond_end = word_end_s > end_s + frame_s and not math.isclose(
+                            word_end_s, end_s + frame_s, rel_tol=0, abs_tol=1e-9
+                        )
+                        if not 0 <= start_s <= word_end_s or beyond_end:
                             return "Multitalker produced invalid native word timestamps"
-                        if start_s > end_s:
+                        if start_s > end_s and not math.isclose(
+                            start_s, end_s, rel_tol=0, abs_tol=1e-9
+                        ):
                             return (
                                 "Multitalker emitted a word beyond the recording chunk"
                             )
                         words.append(
                             SpeakerWord(
-                                start_s, min(word_end_s, end_s), word["word"], label
+                                min(start_s, end_s),
+                                min(word_end_s, end_s),
+                                word["word"],
+                                label,
                             )
                         )
     except (OSError, RuntimeError, ValueError) as error:
