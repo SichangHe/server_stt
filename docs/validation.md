@@ -5,6 +5,8 @@ The English default now uses multitalker Parakeet conditioned on estimated Nemot
 
 The actual multitalker CLI on independent EN2002a seconds 300–390 produced 66/366 speaker-attributed errors (18.0%), versus Qwen's 97/366 (26.5%). Across all three crops, errors fell from 187/816 (22.9%) to 124/816 (15.2%). Chronological word-only errors were 41/212, 37/238, and 93/366; that ordering can penalize different serialization of simultaneous words, so cpWER is the primary delivered-speaker-text comparison. The earlier Torch 2.14 component run produced 61 errors on the independent crop; this is not the installed CLI result.
 
+Controlled Torch 2.14 component comparisons retained the default hard speaker activity and greedy decoding. Across the same 816 reference words, hard turns gave 118 errors; continuous probabilities gave 152, binary probability thresholds 0.5 and 0.3 gave 119 and 117. The one-edit aggregate gain at 0.3 worsened the first clip by two errors, so it was not promoted. Beam size four gave 120 errors versus greedy's 118 with the same decoder thread count. These exploratory comparisons do not replace the installed CLI measurements above.
+
 The Qwen comparison used generated-text alignment and Nemotron speaker probabilities on CPU. Real CLI runs used the pinned Torch 2.9.1 CPU installation on two 90-second crops from AMI ES2004a:
 
 - seconds 300–390: 42 word edits / 212 words (19.8%); 44 speaker-attributed word edits (20.8%)
