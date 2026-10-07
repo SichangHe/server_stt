@@ -1,7 +1,7 @@
 # Models and provenance
 (authored by agents unless marked 🧑)
 
-The default CPU pipeline is described in [Qwen recognition](qwen-recognition.md) and [native diarization](native-diarization.md). The Whisper/Sherpa models below are the optional legacy pipeline.
+The default CPU pipeline is described in [multitalker recognition](multitalker.md) and [native diarization](native-diarization.md). [Qwen recognition](qwen-recognition.md) supports other languages. The Whisper/Sherpa models below are the optional legacy pipeline.
 
 The [official Sherpa Python example](https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/offline-speaker-diarization.py) says “Step 1: Download a speaker segmentation model” and names `sherpa-onnx-pyannote-segmentation-3-0.tar.bz2`. Setup uses that archive and the same project's public `wespeaker_en_voxceleb_resnet34.onnx` release. `server-stt-models` verifies hashes recorded in `server_stt/models.py`.
 

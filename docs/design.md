@@ -4,19 +4,19 @@
 flow
 - validate input paths and new output directory
 - decode mono 16 kHz once with PyAV
-- identify speech turns and cluster speaker embeddings with Sherpa ONNX
-- recognize words with faster-whisper
-  - beam search and voice activity filtering
-  - word times are model estimates
-- assign each word the speaker with greatest overlapping time
-  - no overlapping turn means unknown
-  - simultaneous voices remain in separate turn intervals
+- infer overlapping turns with Nemotron
+- recognize each speaker with multitalker Parakeet conditioned on estimated activity
+  - preserve target labels and native recognition-frame word times
+  - independent 90-second chunks bound recognition memory
+- optional Qwen recognizes chunks then aligns generated text
+- optional Whisper/Sherpa retains beam search and temporal attribution
+- preserve simultaneous voices in separate turn intervals and word streams
 - write Pydantic JSON and grouped text
 
 resources
 - full decoded recording stays in memory
   - roughly 230 MB float32 audio per hour
-- CPU threads default to four
+- CPU threads default to eight
 - recognition device is explicit
 - segmentation and embeddings run on CPU
 
@@ -33,9 +33,11 @@ limitations
 - anonymous speaker labels have recording-local meaning
 - English-trained embeddings require measurement for other languages
 - estimated speaker count can overcluster
-- overlapping words cannot carry multiple recognized voices
+- chronological text can interleave overlapping voices
 - transcription accuracy requires reference evaluation
 
-optional native backend
+backend details
+- [multitalker recognition](multitalker.md)
+- [Qwen recognition](qwen-recognition.md)
 - [native diarization](native-diarization.md)
   - CPU runtime, posterior word attribution, distribution, and limits

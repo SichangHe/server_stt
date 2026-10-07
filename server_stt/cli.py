@@ -86,7 +86,9 @@ def main() -> int:
         help="Sherpa pyannote segmentation ONNX",
     )
     parser.add_argument("--embedding", type=Path, help="Sherpa speaker embedding ONNX")
-    parser.add_argument("--recognizer", choices=["whisper", "qwen"], default="qwen")
+    parser.add_argument(
+        "--recognizer", choices=["whisper", "qwen", "multitalker"], default="multitalker"
+    )
     parser.add_argument(
         "--diarization", choices=["sherpa", "nemotron"], default="nemotron"
     )
@@ -107,7 +109,10 @@ def main() -> int:
     parser.add_argument(
         "--speakers", type=int, default=-1, help="Known speaker count; -1 estimates it"
     )
-    parser.add_argument("--language", help="Language code; default detects it")
+    parser.add_argument(
+        "--language",
+        help="Language code; multitalker assumes English, Qwen/Whisper detect by default",
+    )
     parser.add_argument(
         "--cluster-threshold",
         type=float,
@@ -125,10 +130,15 @@ def main() -> int:
         parser.error(
             "Nemotron estimates speaker count; --speakers applies only to Sherpa"
         )
-    if args.recognizer == "qwen" and args.prompt:
+    if args.recognizer != "whisper" and args.prompt:
         parser.error("--prompt applies only to Whisper")
-    if args.recognizer == "qwen" and args.device != "cpu":
-        parser.error("The Qwen backend currently supports CPU only")
+    if args.recognizer != "whisper" and args.device != "cpu":
+        parser.error("The selected backend currently supports CPU only")
+    if args.recognizer == "multitalker":
+        if args.diarization != "nemotron":
+            parser.error("Multitalker requires Nemotron speaker activity")
+        if args.language is not None and args.language.lower() not in {"en", "english"}:
+            parser.error("Multitalker supports English; select Qwen for other languages")
     qwen_language = None
     if args.recognizer == "qwen":
         from server_stt.recognition import language_name
@@ -193,7 +203,25 @@ def main() -> int:
             for t in diarizer.process(audio).sort_by_start_time()
         ]
     print("Recognizing words", file=sys.stderr)
-    if args.recognizer == "qwen":
+    if args.recognizer == "multitalker":
+        from server_stt.multitalker import recognize as recognize_multitalker
+
+        assert native is not None
+        result = recognize_multitalker(audio, native.turns, threads=args.threads)
+        if isinstance(result, str):
+            parser.error(result)
+        words = [
+            Word(
+                start_s=w.start_s,
+                end_s=w.end_s,
+                text=w.text,
+                probability=w.probability,
+                speaker=w.speaker,
+            )
+            for w in result.words
+        ]
+        model_name, language, language_probability = result.model, result.language, None
+    elif args.recognizer == "qwen":
         from server_stt.recognition import recognize
 
         result = recognize(
@@ -247,14 +275,15 @@ def main() -> int:
             info.language,
             info.language_probability,
         )
-    if native is not None:
-        from server_stt.diarization import speaker_for as native_speaker_for
+    if args.recognizer != "multitalker":
+        if native is not None:
+            from server_stt.diarization import speaker_for as native_speaker_for
 
-        for word in words:
-            word.speaker = native_speaker_for(word.start_s, word.end_s, native)
-    else:
-        for word in words:
-            word.speaker = speaker_for(word.start_s, word.end_s, turns)
+            for word in words:
+                word.speaker = native_speaker_for(word.start_s, word.end_s, native)
+        else:
+            for word in words:
+                word.speaker = speaker_for(word.start_s, word.end_s, turns)
     transcript = Transcript(
         source=str(args.audio),
         model=model_name,

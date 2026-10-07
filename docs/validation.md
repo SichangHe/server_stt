@@ -1,32 +1,36 @@
 # Validation
 (authored by agents unless marked 🧑)
 
-The current default uses Qwen3-ASR-1.7B, generated-text alignment, and Nemotron-3 speaker probabilities on CPU. Real CLI runs used the pinned Torch 2.9.1 CPU installation on two 90-second crops from AMI ES2004a:
+The English default now uses multitalker Parakeet conditioned on estimated Nemotron speaker activity. Real CLI runs with pinned Torch 2.9.1 CPU produced 31/212 speaker-attributed word errors (14.6%) on ES2004a seconds 300–390 and 27/238 (11.3%) on ES2004a seconds 600–690. No reference words or speaker labels entered inference. These are gains over Qwen's 44/212 and 46/238, but substantial errors remain. The earlier Torch 2.14 component experiment had one fewer error on the second crop; published results use the actual CLI installation.
+
+The actual multitalker CLI on independent EN2002a seconds 300–390 produced 66/366 speaker-attributed errors (18.0%), versus Qwen's 97/366 (26.5%). Across all three crops, errors fell from 187/816 (22.9%) to 124/816 (15.2%). Chronological word-only errors were 41/212, 37/238, and 93/366; that ordering can penalize different serialization of simultaneous words, so cpWER is the primary delivered-speaker-text comparison. The earlier Torch 2.14 component run produced 61 errors on the independent crop; this is not the installed CLI result.
+
+The Qwen comparison used generated-text alignment and Nemotron speaker probabilities on CPU. Real CLI runs used the pinned Torch 2.9.1 CPU installation on two 90-second crops from AMI ES2004a:
 
 - seconds 300–390: 42 word edits / 212 words (19.8%); 44 speaker-attributed word edits (20.8%)
 - seconds 600–690: 43 word edits / 238 words (18.1%); 46 speaker-attributed word edits (19.3%)
 
 The previous Whisper/Sherpa pipeline had 73/212 word edits and 99/212 speaker-attributed edits on the first crop; 50/238 and 59/238 on the second. The first baseline supplied the known four-speaker count; the second estimated it. The new pipeline inferred four speakers on both. These improvements do not establish general meeting accuracy: both crops come from one meeting and simultaneous voices remain the main source of missing words. Reference transcripts are read only by evaluation, never by inference or alignment.
 
-An independent meeting, AMI EN2002a Mix-Headset seconds 300–390, produced 313 words against 366 normalized reference words: 87 word edits (23.77%) and 97 speaker-attributed edits (26.50%), with four inferred speakers. No reference transcript or known speaker count was supplied to inference. This confirms substantial remaining meeting errors. [Source audio](https://huggingface.co/datasets/FluidInference/ami-corpus-mirror/resolve/main/sdm/EN2002a.Mix-Headset.wav) SHA-256: `a15017d0d3c871866971ee178052a0ce3a7e44d6fbf89fc23dcab326511b65f5`; annotations use the same official archive as the ES2004a fixture.
+The independent Qwen check on AMI EN2002a Mix-Headset seconds 300–390 produced 313 words against 366 normalized reference words: 87 word edits (23.77%) and 97 speaker-attributed edits (26.50%), with four inferred speakers. No reference transcript or known speaker count was supplied to inference. [Source audio](https://huggingface.co/datasets/FluidInference/ami-corpus-mirror/resolve/main/sdm/EN2002a.Mix-Headset.wav) SHA-256: `a15017d0d3c871866971ee178052a0ce3a7e44d6fbf89fc23dcab326511b65f5`; annotations use the same official archive as the ES2004a fixture.
 
-Reproduce the current pipeline:
+Reproduce the English default:
 
 ```sh
-uv sync --locked --extra qwen
-uv run --extra qwen server-stt-diarization-models models
-uv run --extra qwen python scripts/ami-fixture.py output/fixture
-uv run --extra qwen server-stt output/fixture/ES2004a-300-390.mp3 \
+uv sync --locked --extra multitalker
+uv run --extra multitalker server-stt-diarization-models models
+uv run --extra multitalker python scripts/ami-fixture.py output/fixture
+uv run --extra multitalker server-stt output/fixture/ES2004a-300-390.mp3 \
   --output output/current --language en
-uv run --extra qwen python scripts/score-ami.py output/fixture/reference.tsv \
+uv run --extra multitalker python scripts/score-ami.py output/fixture/reference.tsv \
   output/current/transcript.json
 ```
 
 For the second crop, use a new fixture directory and `--start-s 600`. The scorer's `speaker_attributed_word_error_fraction` is MeetEval's concatenated minimum-permutation word error rate (cpWER): recognized words are grouped by predicted speaker and globally matched to reference speakers. It measures word and speaker errors jointly, including omitted words. [MeetEval's README](https://github.com/fgnt/meeteval) lists “Concatenated minimum-Permutation Word Error Rate (cpWER)”. The older word-time speaker score is retained for historical comparisons, but arbitrary overlap tie-breaking can penalize correctly detected simultaneous speakers; it does not judge the delivered words.
 
-The clean JFK MP3 also passed through the new actual CLI with one speaker and the expected phrases. New ASR word confidence and language confidence are absent and remain `null`; alignment never invents confidence.
+The clean JFK MP3 passed through both Qwen and multitalker actual CLIs with one speaker and the expected phrases. Qwen and multitalker word confidence and language confidence are absent and remain `null`; alignment never invents confidence.
 
-A CPU experiment with Microsoft VibeVoice-ASR tested joint text and speaker generation on the same two clips. It produced 46/212 and 40/238 word edits, and 48/212 and 42/238 speaker-attributed edits. Across both clips, its 90 speaker-attributed edits matched the current pipeline; its 86 word edits exceeded the current 85. Inference took 939 and 905 seconds per 90-second clip. This gave no aggregate accuracy gain and was not adopted. Code revision: `1541f590c7099820f10ea012f48d2399282df69f`; model revision: `d0c9efdb8d614685062c04425d91e01b6f37d944`. Settings were CPU float32, SDPA, 16 threads, greedy generation with 2048 maximum new tokens; no reference text or speaker labels were supplied.
+A CPU experiment with Microsoft VibeVoice-ASR tested joint text and speaker generation on the same two clips. It produced 46/212 and 40/238 word edits, and 48/212 and 42/238 speaker-attributed edits. Across both clips, its 90 speaker-attributed edits matched Qwen; its 86 word edits exceeded Qwen's 85. Inference took 939 and 905 seconds per 90-second clip. This gave no aggregate accuracy gain and was not adopted. Code revision: `1541f590c7099820f10ea012f48d2399282df69f`; model revision: `d0c9efdb8d614685062c04425d91e01b6f37d944`. Settings were CPU float32, SDPA, 16 threads, greedy generation with 2048 maximum new tokens; no reference text or speaker labels were supplied.
 
 Actual CPU inference processed WAV and MP3 on 2026-10-06. The initial official Sherpa Mandarin fixture produced four distinct labels with the supplied known count. No manual transcript reference was available for that fixture.
 
