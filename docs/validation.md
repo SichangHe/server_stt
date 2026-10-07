@@ -33,6 +33,8 @@ The final default combination (`large-v3`, English embedding, threshold 0.8) was
 
 Supplying the known `--speakers 4` with the final models produced four labels and 42 speaker mistakes (19.8%); recognition stayed at 73 word edits. Giving the count fixes overestimation but leaves substantial speaker errors in this meeting.
 
+A focused comparison disabled faster-whisper voice activity filtering while holding the audio, recognition model, CPU precision, language, beam size, and speaker turns constant. It produced 78 word edits (36.8%), worse than the default's 73 (34.4%). Filtering remains enabled; disabling it did not recover missing words in this crop.
+
 A second, clean MP3 check used [OpenAI Whisper's JFK fixture](https://github.com/openai/whisper/blob/main/tests/jfk.flac), source SHA-256 `63a4b1e4c1dc655ac70961ffbf518acd249df237e5a0152faae9a4a836949715`. The final default pipeline returned one speaker and recognized the [upstream test](https://github.com/openai/whisper/blob/main/tests/test_transcribe.py)'s expected phrases “my fellow americans”, “your country”, and “do for you”. This short single-voice case supports basic recognition functionality, not meeting accuracy.
 
 GPU recognition, very long recordings, and non-English use of the English embedding remain unvalidated.
