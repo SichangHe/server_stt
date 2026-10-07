@@ -19,6 +19,10 @@ installation
 - CPU float32 runs require roughly 12 GB RAM for loaded models and inference
 - optional SDK dependencies remain separate from the Whisper installation
 
+provenance
+- pinned [ASR model card](https://huggingface.co/Qwen/Qwen3-ASR-1.7B/blob/7278e1e70fe206f11671096ffdd38061171dd6e5/README.md) and [aligner model card](https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B/blob/c7cbfc2048c462b0d63a45797104fc9db3ad62b7/README.md) both declare `license: apache-2.0`
+- downloaded snapshots retain the model cards and bundled license files
+
 measurement
 - 20-second chunks improved two 90-second AMI meeting crops over whole-crop recognition
   - actual CLI results and reproduction commands are in [validation](validation.md)
