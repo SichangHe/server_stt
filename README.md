@@ -23,4 +23,10 @@ The Mac repository uses FluidAudio/CoreML; the server uses different model runti
 
 See [design](docs/design.md), [validation](docs/validation.md), and [model provenance](docs/models.md).
 
-`server-stt-live` reads raw mono 16 kHz signed 16-bit PCM on stdin and runs the file pipeline on each 20-second chunk independently. It is experimental: speaker labels are not consistent between chunks, the model reloads for every chunk, library logs share stdout with the JSON lines, and measured accuracy is far below the file tool's; see [validation](docs/validation.md).
+`server-stt-live` transcribes audio while it arrives: it reads raw mono 16 kHz signed 16-bit PCM on stdin and prints JSON lines of words with speaker labels that stay consistent for the whole stream. Run it from the repository root after the multitalker setup above:
+
+```sh
+ffmpeg -v error -i meeting.mp3 -ac 1 -ar 16000 -f s16le - | uv run --extra multitalker server-stt-live
+```
+
+See [live design](docs/live.md) and its measured accuracy and delay in [validation](docs/validation.md).

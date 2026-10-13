@@ -9,6 +9,14 @@ The actual multitalker CLI on independent EN2002a seconds 300–390 produced 66/
 
 🤖 The same review piped ES2004a seconds 300–420 as PCM into `server-stt-live` with defaults: 208/272 speaker-attributed errors (76.5%), against 67/272 (24.6%) for the file CLI on the same 120 seconds. Ignoring speaker labels, live had 92/272 errors. Each 20-second chunk restarted labels at `SPEAKER_01`, restored the model again (six restores), and wrote NeMo logs to stdout among the JSON lines. Input came from a file without real-time pacing, so latency is unmeasured; the run took 137 seconds for 120 seconds of audio including startup.
 
+🤖 After the live rewrite (one persistent speaker stream, sliding recognition window; [live design](live.md)), the same reviewer script `remeasure.py`, which feeds PCM at real time, gave these developer-run results on 13 Oct 2026 with 16 threads, three streams and one file-tool run in parallel on the shared server. No stdout line was non-JSON and no line was an error. The independent reviewer has not yet confirmed them.
+
+- ES2004a 300–420 s: 51/272 speaker-attributed errors (18.8%); word delay median 8.2 s, max 20.4 s
+- EN2002a 300–390 s: 65/366 (17.8%); delay median 12.5 s, max 28.4 s
+- ES2004a 0–600 s: 201/1107 (18.2%); delay median 5.4 s, max 14.1 s; 608 s wall time
+
+Word delay is arrival time since the first PCM byte minus the word's end time. The maximum is the first words, which wait about 20 s for model loading. The file tool scored 67/272 on the first crop before and after the recognizer refactor.
+
 Controlled Torch 2.14 component comparisons retained the default hard speaker activity and greedy decoding. Across the same 816 reference words, hard turns gave 118 errors; continuous probabilities gave 152, binary probability thresholds 0.5 and 0.3 gave 119 and 117. The one-edit aggregate gain at 0.3 worsened the first clip by two errors, so it was not promoted. Beam size four gave 120 errors versus greedy's 118 with the same decoder thread count. These exploratory comparisons do not replace the installed CLI measurements above.
 
 Independent 30-second recognition chunks gave 33/212, 24/238, and 70/366 errors, totaling 127/816 versus 118/816 with 90-second chunks in the same component environment. The shorter context was not adopted. This test exposed rounding at the allowed one-frame timestamp boundary (`30.080000000000002` versus `30.08`); a one-nanosecond numerical tolerance now prevents rejection without expanding the meaningful timing range. Real reruns confirmed ordered, bounded output times.

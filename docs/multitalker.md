@@ -5,6 +5,8 @@ estimated speaker activity
 - native Nemotron turns define target and competing-speaker masks at encoder frame times
 - overlapping turns activate both masks
 - recognize each estimated speaker separately from the same mono recording
+  - batch row = target speaker; texts matched one-by-one passes in six timing runs
+  - at most 120 s of audio rows per pass: a 90-second file chunk runs one speaker per pass, a short live window all speakers
   - no enrollment audio, reference text, or reference speaker activity enters inference
 - no detected turns returns an empty transcript
 

@@ -182,26 +182,102 @@ def diarize(
             )
             if status:
                 return _error(lib, "posterior retrieval")
-        count = c.c_size_t()
-        if lib.nemo_speech_diar_segments(stream, None, None, 0, c.byref(count)):
-            return _error(lib, "turn counting")
-        segments = (_Segment * count.value)()
-        if lib.nemo_speech_diar_segments(
-            stream, None, segments, count.value, c.byref(count)
-        ):
-            return _error(lib, "turn retrieval")
-        return DiarizationResult(
-            [
-                DiarizationTurn(s.start_s, s.end_s, f"SPEAKER_{s.speaker:02d}")
-                for s in segments
-            ],
-            probabilities,
-            frame_s,
-        )
+        turns = _turns(lib, stream)
+        if isinstance(turns, str):
+            return turns
+        return DiarizationResult(turns, probabilities, frame_s)
     finally:
         if stream:
             lib.nemo_speech_diar_stream_close(stream)
         lib.nemo_speech_diar_destroy(model)
+
+
+def _turns(lib: c.CDLL, stream: c.c_void_p) -> list[DiarizationTurn] | str:
+    count = c.c_size_t()
+    if lib.nemo_speech_diar_segments(stream, None, None, 0, c.byref(count)):
+        return _error(lib, "turn counting")
+    segments = (_Segment * count.value)()
+    if lib.nemo_speech_diar_segments(
+        stream, None, segments, count.value, c.byref(count)
+    ):
+        return _error(lib, "turn retrieval")
+    return [
+        DiarizationTurn(s.start_s, s.end_s, f"SPEAKER_{s.speaker:02d}")
+        for s in segments
+    ]
+
+
+@dataclass
+class DiarizationStream:
+    """One growing recording whose speaker labels keep their meaning.
+
+    The native streaming state machine labels audio as whole model chunks
+    arrive, so `done_s` trails pushed audio. `close` must be called once.
+    """
+
+    lib: c.CDLL
+    model: c.c_void_p
+    stream: c.c_void_p
+    frame_s: float
+
+    @staticmethod
+    def open(
+        model_path: Path, runtime_path: Path, chunk_frames: int
+    ) -> "DiarizationStream | str":
+        """Use the model's low-latency geometry with 80 ms `chunk_frames`."""
+        if not model_path.is_file():
+            return f"Nemotron model not found: {model_path}"
+        lib = _load(runtime_path)
+        if isinstance(lib, str):
+            return lib
+        config = _ModelConfig(
+            c.sizeof(_ModelConfig),
+            str(model_path).encode(),
+            -1,
+            None,
+            chunk_frames,
+            0,
+            -1,
+            0,
+            0,
+            0,
+        )
+        model, stream = c.c_void_p(), c.c_void_p()
+        if lib.nemo_speech_diar_create(c.byref(config), c.byref(model)):
+            return _error(lib, "model loading")
+        if lib.nemo_speech_diar_stream_open(model, c.byref(stream)):
+            lib.nemo_speech_diar_destroy(model)
+            return _error(lib, "stream opening")
+        return DiarizationStream(
+            lib, model, stream, lib.nemo_speech_diar_seconds_per_frame(model)
+        )
+
+    def push(self, audio: NDArray[np.float32]) -> str | None:
+        """Label as much of the pushed mono 16 kHz audio as chunks allow."""
+        samples = np.ascontiguousarray(audio, dtype=np.float32)
+        if self.lib.nemo_speech_diar_stream_push_f32(
+            self.stream,
+            samples.ctypes.data_as(c.POINTER(c.c_float)),
+            len(samples),
+            16000,
+        ):
+            return _error(self.lib, "inference")
+
+    def finish(self) -> str | None:
+        """Label the remaining tail; later pushes are ignored."""
+        if self.lib.nemo_speech_diar_stream_finish(self.stream):
+            return _error(self.lib, "inference")
+
+    def done_s(self) -> float:
+        return self.lib.nemo_speech_diar_frame_count(self.stream) * self.frame_s
+
+    def turns(self) -> list[DiarizationTurn] | str:
+        """All turns so far; those near `done_s` can still change."""
+        return _turns(self.lib, self.stream)
+
+    def close(self) -> None:
+        self.lib.nemo_speech_diar_stream_close(self.stream)
+        self.lib.nemo_speech_diar_destroy(self.model)
 
 
 def speaker_for(start_s: float, end_s: float, result: DiarizationResult) -> str | None:

@@ -37,6 +37,8 @@ limitations
 - transcription accuracy requires reference evaluation
 
 backend details
+- [live transcription](live.md)
+  - streaming input, stable labels, delay
 - [multitalker recognition](multitalker.md)
 - [Qwen recognition](qwen-recognition.md)
 - [native diarization](native-diarization.md)

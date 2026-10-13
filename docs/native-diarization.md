@@ -29,6 +29,9 @@ inference limits
 - native default segmentation remains unchanged
   - onset 0.641, offset 0.561, edge pads 0.229/0.079 seconds, minimum speech 0.511 seconds, minimum gap 0.296 seconds
   - [native configuration](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/v0.2.0/src/asr/diar/diar_pipeline.h), `DiarSegmentationCfg`
+- `DiarizationStream` keeps one native stream open for [live transcription](live.md)
+  - model-default low-latency geometry with an explicit chunk length
+  - turns ending within about 2 s of the labeled end can still change; none ending earlier changed in a 120-second test
 
 distribution
 - `server_stt/diarization_models.py` downloads runtime and model separately
