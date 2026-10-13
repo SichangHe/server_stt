@@ -1,7 +1,6 @@
 """Process raw microphone PCM chunks online with the existing CPU models."""
 import argparse, json, sys
 from pathlib import Path
-import numpy as np
 from server_stt.live import pcm_chunks
 
 def main() -> int:
