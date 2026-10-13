@@ -23,7 +23,4 @@ The Mac repository uses FluidAudio/CoreML; the server uses different model runti
 
 See [design](docs/design.md), [validation](docs/validation.md), and [model provenance](docs/models.md).
 
-Online input framing is available through `server_stt.live.pcm_chunks` and
-`server_stt.live.run`. It accepts raw mono 16 kHz signed 16-bit PCM and keeps
-latency bounded by the selected chunk size. Model-backed live diarization and
-recognition are not yet validated and are not exposed as a production CLI.
+`server-stt-live` reads raw mono 16 kHz signed 16-bit PCM on stdin and runs the file pipeline on each 20-second chunk independently. It is experimental: speaker labels are not consistent between chunks, the model reloads for every chunk, library logs share stdout with the JSON lines, and measured accuracy is far below the file tool's; see [validation](docs/validation.md).
