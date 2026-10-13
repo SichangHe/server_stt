@@ -42,6 +42,8 @@ Actual CPU inference processed WAV and MP3 on 2026-10-06. The initial official S
 
 The English reference is AMI meeting ES2004a, Mix-Headset seconds 300–390, four participants. `scripts/ami-fixture.py` downloads checksummed AMI audio from a FluidInference mirror and manual word annotations from the official AMI server; generates the 90-second WAV/MP3 and reference timestamps. Credit: AMI Consortium. The [AMI download page](https://groups.inf.ed.ac.uk/ami/download/) states “license altered to CC BY 4.0”; see the [corpus license](https://groups.inf.ed.ac.uk/ami/corpus/license.shtml). Exact URLs and hashes are in the script's `SOURCES`. Audio and generated results are excluded from Git.
 
+The [official AMI Full-corpus-ASR partition](https://groups.inf.ed.ac.uk/ami/corpus/datasets.shtml) lists “SC (UNSEEN DATA FOR EVALUATION): ES2004, IS1009, TS3003, EN2002”. Both tested meetings belong to that recommended evaluation partition. NVIDIA's [pinned model card](https://huggingface.co/nvidia/multitalker-parakeet-streaming-0.6b-v1/blob/8749fc71fd6e2d88ef230159bbf2aea69b524ee1/README.md) lists “AMI Corpus” under “Training Datasets (Real conversations)” without specifying excluded meeting IDs. The independent meeting was held out from our tuning; exclusion from pretrained training is unverified.
+
 The fixture-generation script requires a system `ffmpeg` executable; the transcription CLI itself uses bundled PyAV decoding.
 
 ```sh

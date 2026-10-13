@@ -160,19 +160,19 @@ def recognize(
                             "Multitalker produced speech without native word timestamps"
                         )
                     for word in timestamp_words:
-                        start_s = offset_s + float(word["start_offset"]) * frame_s
-                        word_end_s = offset_s + float(word["end_offset"]) * frame_s
-                        beyond_end = word_end_s > end_s + frame_s and not math.isclose(
-                            word_end_s, end_s + frame_s, rel_tol=0, abs_tol=1e-9
-                        )
-                        if not 0 <= start_s <= word_end_s or beyond_end:
-                            return "Multitalker produced invalid native word timestamps"
-                        if start_s > end_s and not math.isclose(
-                            start_s, end_s, rel_tol=0, abs_tol=1e-9
+                        start_frame = float(word["start_offset"])
+                        end_frame = float(word["end_offset"])
+                        n_encoded_frames = int(encoded_length[0])
+                        if not (
+                            0 <= start_frame <= n_encoded_frames
+                            and start_frame <= end_frame <= n_encoded_frames + 1
                         ):
                             return (
-                                "Multitalker emitted a word beyond the recording chunk"
+                                f"Multitalker invalid timestamps for {label} in chunk "
+                                f"{offset_s:g}–{end_s:g}s: frames {start_frame:g}–{end_frame:g}"
                             )
+                        start_s = offset_s + start_frame * frame_s
+                        word_end_s = offset_s + end_frame * frame_s
                         words.append(
                             SpeakerWord(
                                 min(start_s, end_s),

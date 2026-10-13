@@ -11,6 +11,8 @@ estimated speaker activity
 bounded CPU recognition
 - independent chunks up to 90 seconds bound encoder memory
 - native RNNT emission offsets produce word times at 80 ms resolution
+  - validate offsets against actual encoder length, including padded final frames
+  - clip valid emission times to the audio chunk bounds
   - estimates are not exact acoustic boundaries or forced alignments
   - 184 exact matched words in the first AMI crop had median start delay 0.60 seconds
   - variable delays and word ends spanning pauses prevent a justified constant correction
