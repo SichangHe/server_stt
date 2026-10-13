@@ -5,7 +5,6 @@ import json
 import sys
 from pathlib import Path
 from server_stt.live import pcm_chunks
-from server_stt.live import pcm_chunks
 
 
 def main() -> int:
