@@ -1,5 +1,7 @@
 """Process raw microphone PCM chunks online with the existing CPU models."""
-import argparse, json, sys
+import argparse
+import json
+import sys
 from pathlib import Path
 from server_stt.live import pcm_chunks
 
