@@ -26,6 +26,7 @@ explicit = true
 server-stt = "server_stt.cli:main"
 server-stt-models = "server_stt.models:main"
 server-stt-diarization-models = "server_stt.diarization_models:main"
+server-stt-live = "server_stt.live_cli:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -22,3 +22,8 @@ The previous lighter Whisper/Sherpa pipeline remains available with `--recognize
 The Mac repository uses FluidAudio/CoreML; the server uses different model runtimes, so no code submodule is shared.
 
 See [design](docs/design.md), [validation](docs/validation.md), and [model provenance](docs/models.md).
+
+Online input framing is available through `server_stt.live.pcm_chunks` and
+`server_stt.live.run`. It accepts raw mono 16 kHz signed 16-bit PCM and keeps
+latency bounded by the selected chunk size. Model-backed live diarization and
+recognition are not yet validated and are not exposed as a production CLI.
