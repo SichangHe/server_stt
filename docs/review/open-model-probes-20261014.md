@@ -52,6 +52,8 @@ The model-load command printed
 
 Crop outputs were 54/366 at threshold 0.3, 60/366 at 0.5, and 61/366 at
 0.7. The 0.3 result beat 58/366, so it was run on whole ES2004a:
+The checked-in scripts were rerun after pinning; the three crop scores were
+unchanged.
 
 ```sh
 timeout 2400s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python scripts/review-sortformer-full.py 2>&1 | tee /tmp/full-sortformer21-activity03.log
