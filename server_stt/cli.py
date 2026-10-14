@@ -122,7 +122,6 @@ def main() -> int:
     parser.add_argument(
         "--activity-threshold",
         type=float,
-        default=0.3,
         help="Nemotron posterior threshold for multitalker masks (default: 0.3)",
     )
     parser.add_argument("--prompt", help="Vocabulary/context hint for recognition")
@@ -147,6 +146,11 @@ def main() -> int:
             parser.error("Multitalker requires Nemotron speaker activity")
         if args.language is not None and args.language.lower() not in {"en", "english"}:
             parser.error("Multitalker supports English; select Qwen for other languages")
+        activity_threshold = (
+            0.3 if args.activity_threshold is None else args.activity_threshold
+        )
+    else:
+        activity_threshold = None
     qwen_language = None
     if args.recognizer == "qwen":
         from server_stt.recognition import language_name
@@ -221,7 +225,7 @@ def main() -> int:
             threads=args.threads,
             activity=native.probabilities,
             activity_frame_s=native.frame_s,
-            activity_threshold=args.activity_threshold,
+            activity_threshold=activity_threshold,
         )
         if isinstance(result, str):
             parser.error(result)

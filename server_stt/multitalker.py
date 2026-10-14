@@ -63,11 +63,16 @@ def recognize(
         activity is None
         or activity_frame_s is None
         or not math.isfinite(activity_frame_s)
+        or activity_frame_s <= 0
         or activity.ndim != 2
+        or not activity.shape[0]
+        or not activity.shape[1]
         or not np.isfinite(activity).all()
+        or np.any(activity < 0)
+        or np.any(activity > 1)
         or not 0 < activity_threshold <= 1
     ):
-        return "Multitalker activity threshold needs finite posterior activity and a threshold in (0, 1]"
+        return "Multitalker activity threshold needs finite posterior probabilities and a threshold in (0, 1]"
     duration_s = audio.size / 16000
     if any(
         not turn.speaker
@@ -77,6 +82,15 @@ def recognize(
         for turn in turns
     ):
         return "Multitalker speaker turns must have finite valid recording times"
+    if activity_threshold is not None:
+        assert activity is not None
+        for turn in turns:
+            try:
+                speaker_index = int(turn.speaker.rsplit("_", 1)[1]) - 1
+            except (IndexError, ValueError):
+                return "Multitalker posterior masks need SPEAKER_NN labels"
+            if not 0 <= speaker_index < activity.shape[1]:
+                return "Multitalker posterior masks have too few speaker columns"
     if not turns:
         return MultitalkerResult([])
     model = load(threads)
