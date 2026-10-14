@@ -6,12 +6,12 @@ estimated speaker activity
 - overlapping turns activate both masks
 - recognize each estimated speaker separately from the same mono recording
   - batch row = target speaker; texts matched one-by-one passes in six timing runs
-  - at most 120 s of audio rows per pass: a 90-second file chunk runs one speaker per pass, a short live window all speakers
+  - at most 120 s of audio rows per pass: a 120-second file chunk runs one speaker per pass, a short live window all speakers
   - no enrollment audio, reference text, or reference speaker activity enters inference
 - no detected turns returns an empty transcript
 
 bounded CPU recognition
-- independent chunks up to 90 seconds bound encoder memory
+- independent 120-second file chunks bound encoder memory
 - native RNNT emission offsets produce word times at 80 ms resolution
   - validate offsets against actual encoder length, including padded final frames
   - clip valid emission times to the audio chunk bounds
