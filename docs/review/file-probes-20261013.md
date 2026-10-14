@@ -47,6 +47,24 @@ timeout 120s uv run --extra multitalker python scripts/score-ami.py /ssd1/sichan
 The temporary `--recognition-chunk-s` option was removed after this probe; the
 production interface remains the fixed 120-second bound.
 
+0.3 posterior masks with 90-second windows
+
+The temporary default was changed to 90 seconds for this probe, then restored
+to 120 seconds without committing the temporary change.
+
+```sh
+timeout 360s uv run --extra multitalker server-stt /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/EN2002a-300-390.wav --output output/file-en2002a-th03-ch90 --language en --activity-threshold 0.3
+timeout 120s uv run --extra multitalker python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-th03-ch90/transcript.json
+```
+
+```text
+"word_edit_errors": 86,
+"speaker_attributed_word_edit_errors": 58,
+"speaker_attributed_word_error_fraction": 0.15846994535519127
+```
+
+It tied 120-second windows on cpWER, so the 120-second default remains.
+
 one-frame posterior-mask dilation
 
 The temporary implementation dilated each binary posterior mask by one frame
