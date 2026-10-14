@@ -13,6 +13,7 @@ Source: `nvidia/parakeet-tdt-0.6b-v3`, revision
 `541d1f99c6b0c3cd0b11a95167540bb8edefd82b` (CC-BY-4.0).
 
 ```sh
+set -e -o pipefail
 uv run python - <<'PY'
 from huggingface_hub import snapshot_download
 print(snapshot_download('nvidia/parakeet-tdt-0.6b-v3', revision='541d1f99c6b0c3cd0b11a95167540bb8edefd82b'))
@@ -38,6 +39,7 @@ The model's posterior activity tensor was passed to the existing multitalker
 recognizer. Crop commands and exact outputs:
 
 ```sh
+set -e -o pipefail
 timeout 1200s uv run --locked --extra multitalker python - <<'PY'
 from nemo.collections.asr.models import SortformerEncLabelModel
 m=SortformerEncLabelModel.from_pretrained('nvidia/diar_streaming_sortformer_4spk-v2.1',revision='cd03eee90fbec18297ac31b8c21546e596b7f71c',map_location='cpu')
@@ -56,6 +58,7 @@ The checked-in scripts were rerun after pinning; the three crop scores were
 unchanged.
 
 ```sh
+set -e -o pipefail
 timeout 2400s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --locked --extra multitalker python scripts/review-sortformer-full.py 2>&1 | tee /tmp/full-sortformer21-activity03.log
 timeout 360s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/full-ES2004a/reference.tsv output/file-full-sortformer21-activity03/transcript.json
 ```

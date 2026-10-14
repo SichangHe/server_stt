@@ -42,6 +42,7 @@ def main() -> None:
         "words": [{"start_s": w.start_s, "end_s": w.end_s, "text": w.text, "speaker": w.speaker, "probability": w.probability} for w in result.words],
     }
     output = Path("output/file-full-sortformer21-activity03/transcript.json")
+    output.unlink(missing_ok=True)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(transcript, indent=2) + "\n")
 

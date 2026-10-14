@@ -51,6 +51,7 @@ def main() -> None:
         "words": words,
     }
     output = Path("output/file-en2002a-parakeet-tdt/transcript.json")
+    output.unlink(missing_ok=True)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(transcript, indent=2) + "\n")
 
