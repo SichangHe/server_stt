@@ -5,7 +5,7 @@ The current default is pinned multitalker Parakeet with Nemotron activity
 masks: 58/366 on EN2002a seconds 300–390 and 312/2614 on whole ES2004a.
 Official NVIDIA models were downloaded and screened on EN2002a first. Only a
 crop winner was run on whole ES2004a. No model beat the whole-meeting default.
-The reproducible probe scripts and this evidence are in commit `60c76e7`.
+The reproducible probe scripts are committed beside this evidence.
 
 ## Parakeet TDT v3
 
@@ -17,7 +17,7 @@ uv run python - <<'PY'
 from huggingface_hub import snapshot_download
 print(snapshot_download('nvidia/parakeet-tdt-0.6b-v3', revision='541d1f99c6b0c3cd0b11a95167540bb8edefd82b'))
 PY
-timeout 1200s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python scripts/review-parakeet-tdt.py 2>&1 | tee /tmp/en2002a-parakeet-tdt.log
+timeout 1200s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --locked --extra multitalker python scripts/review-parakeet-tdt.py 2>&1 | tee /tmp/en2002a-parakeet-tdt.log
 timeout 180s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-parakeet-tdt/transcript.json
 ```
 
@@ -38,12 +38,12 @@ The model's posterior activity tensor was passed to the existing multitalker
 recognizer. Crop commands and exact outputs:
 
 ```sh
-timeout 1200s uv run --extra multitalker python - <<'PY'
+timeout 1200s uv run --locked --extra multitalker python - <<'PY'
 from nemo.collections.asr.models import SortformerEncLabelModel
 m=SortformerEncLabelModel.from_pretrained('nvidia/diar_streaming_sortformer_4spk-v2.1',revision='cd03eee90fbec18297ac31b8c21546e596b7f71c',map_location='cpu')
 print(type(m))
 PY
-timeout 1800s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python scripts/review-sortformer-activity.py 2>&1 | tee /tmp/en2002a-sortformer-activity.log
+timeout 1800s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --locked --extra multitalker python scripts/review-sortformer-activity.py 2>&1 | tee /tmp/en2002a-sortformer-activity.log
 for t in 0.3 0.5 0.7; do timeout 180s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-sortformer21-activity-$t/transcript.json; done
 ```
 
@@ -56,7 +56,7 @@ The checked-in scripts were rerun after pinning; the three crop scores were
 unchanged.
 
 ```sh
-timeout 2400s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python scripts/review-sortformer-full.py 2>&1 | tee /tmp/full-sortformer21-activity03.log
+timeout 2400s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --locked --extra multitalker python scripts/review-sortformer-full.py 2>&1 | tee /tmp/full-sortformer21-activity03.log
 timeout 360s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/full-ES2004a/reference.tsv output/file-full-sortformer21-activity03/transcript.json
 ```
 
