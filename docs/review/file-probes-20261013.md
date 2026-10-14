@@ -65,6 +65,25 @@ timeout 120s uv run --extra multitalker python scripts/score-ami.py /ssd1/sichan
 
 It tied 120-second windows on cpWER, so the 120-second default remains.
 
+target-only lower threshold
+
+A temporary variant used a 0.2 target threshold and 0.3 competing-speaker
+threshold. It was measured with:
+
+```sh
+timeout 360s uv run --extra multitalker server-stt /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/EN2002a-300-390.wav --output output/file-en2002a-target02 --language en
+timeout 120s uv run --extra multitalker python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-target02/transcript.json
+```
+
+```text
+"word_edit_errors": 90,
+"speaker_attributed_word_edit_errors": 59,
+"speaker_attributed_word_error_fraction": 0.16120218579234974
+```
+
+It regressed the promoted 0.3/0.3 masks and was reverted without a
+whole-meeting run.
+
 one-frame posterior-mask dilation
 
 The temporary implementation dilated each binary posterior mask by one frame
