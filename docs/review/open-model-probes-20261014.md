@@ -5,7 +5,7 @@ The current default is pinned multitalker Parakeet with Nemotron activity
 masks: 58/366 on EN2002a seconds 300–390 and 312/2614 on whole ES2004a.
 Official NVIDIA models were downloaded and screened on EN2002a first. Only a
 crop winner was run on whole ES2004a. No model beat the whole-meeting default.
-This record is committed at `f9cf8a2`.
+The reproducible probe scripts and this evidence are in commit `60c76e7`.
 
 ## Parakeet TDT v3
 
