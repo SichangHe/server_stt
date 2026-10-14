@@ -7,10 +7,11 @@ done
 - `server-stt-live` rewritten; design in [live](live.md), numbers in [validation](validation.md)
 - one context-free code review done; its four findings fixed
 - after those fixes: one paced run scored 52/272, file tool 67/272; empty, 1-second, odd-byte, and missing-model inputs behave
+- isolated ES2004a 0–600 s rerun at commit 73ba6e1 scored 201/1107 (18.2% cpWER), 603.2 s wall, median word delay 3.7 s, max 10.0 s; evidence in [live-600-73ba6e1](review/live-600-73ba6e1.md)
 
 open
-- independent confirmation by stt_review.md has not been requested yet
-  - next step: ask it through the manager to rerun its three `remeasure.py` commands on this commit
+- independent confirmation by stt_review.md remains separate from this developer-run evidence
+  - the isolated 600-second result confirms the previous working-tree magnitude but does not replace an independent review
 - thread default is unresolved
   - 16 threads: no stall in two parallel runs (four processes each); delay medians 5–13 s
   - 32 threads alone: delay medians 5–6 s

@@ -20,6 +20,6 @@ where the review stands
 - the reviewer has not read the new live code for quality, only measured it
 
 next step
-- re-run ES2004a 0–600 s alone on 73ba6e1, then confirm or reject stt_live_fix.md's result to the manager
+- ES2004a 0–600 s was re-run alone on 73ba6e1; evidence is in [live-600-73ba6e1](review/live-600-73ba6e1.md)
 - review the diff 0249312..73ba6e1 for code quality
 - commands and paths: `stt_review_measurement_commands.md` and `stt_review_live_request.md` in the agents' work log directory; outputs `r4-*.txt` in the `review-20261012` artifacts directory
