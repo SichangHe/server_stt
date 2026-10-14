@@ -119,6 +119,12 @@ def main() -> int:
         default=0.8,
         help="Automatic count threshold; larger gives fewer speakers",
     )
+    parser.add_argument(
+        "--activity-threshold",
+        type=float,
+        default=0.3,
+        help="Nemotron posterior threshold for multitalker masks (default: 0.3)",
+    )
     parser.add_argument("--prompt", help="Vocabulary/context hint for recognition")
     args = parser.parse_args()
     paths = [args.audio]
@@ -132,6 +138,8 @@ def main() -> int:
         )
     if args.recognizer != "whisper" and args.prompt:
         parser.error("--prompt applies only to Whisper")
+    if args.activity_threshold is not None and args.recognizer != "multitalker":
+        parser.error("--activity-threshold applies only to multitalker")
     if args.recognizer != "whisper" and args.device != "cpu":
         parser.error("The selected backend currently supports CPU only")
     if args.recognizer == "multitalker":
@@ -207,7 +215,14 @@ def main() -> int:
         from server_stt.multitalker import recognize as recognize_multitalker
 
         assert native is not None
-        result = recognize_multitalker(audio, native.turns, threads=args.threads)
+        result = recognize_multitalker(
+            audio,
+            native.turns,
+            threads=args.threads,
+            activity=native.probabilities,
+            activity_frame_s=native.frame_s,
+            activity_threshold=args.activity_threshold,
+        )
         if isinstance(result, str):
             parser.error(result)
         words = [

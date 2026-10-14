@@ -42,6 +42,9 @@ def recognize(
     turns: list[DiarizationTurn],
     threads: int = 8,
     chunk_s: float = 120,
+    activity: NDArray[np.float32] | None = None,
+    activity_frame_s: float | None = None,
+    activity_threshold: float | None = None,
 ) -> MultitalkerResult | str:
     """Recognize each speaker using target and competing-speaker activity.
 
@@ -56,6 +59,15 @@ def recognize(
         return "Multitalker needs nonempty audio and positive thread count"
     if not math.isfinite(chunk_s) or not 0 < chunk_s <= BATCH_AUDIO_S:
         return f"Multitalker chunk duration must be in (0, {BATCH_AUDIO_S:g}] seconds"
+    if activity_threshold is not None and (
+        activity is None
+        or activity_frame_s is None
+        or not math.isfinite(activity_frame_s)
+        or activity.ndim != 2
+        or not np.isfinite(activity).all()
+        or not 0 < activity_threshold <= 1
+    ):
+        return "Multitalker activity threshold needs finite posterior activity and a threshold in (0, 1]"
     duration_s = audio.size / 16000
     if any(
         not turn.speaker
@@ -75,7 +87,14 @@ def recognize(
     for offset in range(0, audio.size, chunk_samples):
         offset_s = offset / 16000
         chunk_words = recognize_chunk(
-            model, audio[offset : offset + chunk_samples], offset_s, turns, offset_s
+            model,
+            audio[offset : offset + chunk_samples],
+            offset_s,
+            turns,
+            offset_s,
+            activity,
+            activity_frame_s,
+            activity_threshold,
         )
         if isinstance(chunk_words, str):
             return chunk_words
@@ -133,6 +152,9 @@ def recognize_chunk(
     offset_s: float,
     turns: list[DiarizationTurn],
     since_s: float,
+    activity: NDArray[np.float32] | None = None,
+    activity_frame_s: float | None = None,
+    activity_threshold: float | None = None,
 ) -> list[SpeakerWord] | str:
     """Recognize speakers with a turn after `since_s`, batched over speakers.
 
@@ -165,18 +187,36 @@ def recognize_chunk(
             length = torch.tensor([chunk.size])
             _, processed_length = model.preprocessor(input_signal=signal, length=length)
             n_frames = math.ceil(int(processed_length[0]) / subsampling_factor)
-            activity = torch.zeros((len(labels), n_frames), dtype=torch.float32)
             frame_times = torch.arange(n_frames) * frame_s + offset_s
-            for index, label in enumerate(labels):
-                for turn in active_turns:
-                    if turn.speaker == label:
-                        activity[
-                            index,
-                            (frame_times >= turn.start_s) & (frame_times < turn.end_s),
-                        ] = 1
+            if activity_threshold is None:
+                masks = torch.zeros((len(labels), n_frames), dtype=torch.float32)
+                for index, label in enumerate(labels):
+                    for turn in active_turns:
+                        if turn.speaker == label:
+                            masks[
+                                index,
+                                (frame_times >= turn.start_s) & (frame_times < turn.end_s),
+                            ] = 1
+            else:
+                assert activity is not None and activity_frame_s is not None
+                source_times = np.arange(activity.shape[0]) * activity_frame_s
+                masks = torch.from_numpy(
+                    np.asarray(
+                        [
+                            np.interp(
+                                frame_times.numpy(),
+                                source_times,
+                                activity[:, int(label.rsplit("_", 1)[1]) - 1],
+                            )
+                            >= activity_threshold
+                            for label in labels
+                        ],
+                        dtype=np.float32,
+                    )
+                )
             background = torch.stack(
                 [
-                    activity[[j for j in range(len(labels)) if j != index]].amax(dim=0)
+                    masks[[j for j in range(len(labels)) if j != index]].amax(dim=0)
                     if len(labels) > 1
                     else torch.zeros(n_frames)
                     for index in targets
@@ -188,7 +228,7 @@ def recognize_chunk(
             for first in range(0, len(targets), n_rows):
                 rows = targets[first : first + n_rows]
                 model.set_speaker_targets(
-                    activity[rows], background[first : first + n_rows]
+                    masks[rows], background[first : first + n_rows]
                 )
                 encoded, encoded_length = model.forward(
                     input_signal=signal.repeat(len(rows), 1),
