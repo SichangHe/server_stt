@@ -21,5 +21,5 @@ where the review stands
 
 next step
 - ES2004a 0–600 s was re-run alone on 73ba6e1; evidence is in [live-600-73ba6e1](review/live-600-73ba6e1.md)
-- review the diff 0249312..73ba6e1 for code quality
+- the diff 0249312..73ba6e1 passed the static checks and code review recorded in [live-code-review-73ba6e1](review/live-code-review-73ba6e1.md)
 - commands and paths: `stt_review_measurement_commands.md` and `stt_review_live_request.md` in the agents' work log directory; outputs `r4-*.txt` in the `review-20261012` artifacts directory
