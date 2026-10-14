@@ -5,6 +5,7 @@ The current default is pinned multitalker Parakeet with Nemotron activity
 masks: 58/366 on EN2002a seconds 300–390 and 312/2614 on whole ES2004a.
 Official NVIDIA models were downloaded and screened on EN2002a first. Only a
 crop winner was run on whole ES2004a. No model beat the whole-meeting default.
+This record is committed at `bb3c104`.
 
 ## Parakeet TDT v3
 
@@ -19,6 +20,10 @@ PY
 timeout 1200s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python /tmp/probe_parakeet_score.py 2>&1 | tee /tmp/en2002a-parakeet-tdt.log
 timeout 180s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-parakeet-tdt/transcript.json
 ```
+
+The download printed the pinned Hugging Face snapshot under
+`~/.cache/huggingface/hub/models--nvidia--parakeet-tdt-0.6b-v3`; the inference
+command printed NeMo model-load logs and completed with the timing shown below.
 
 Output: `elapsed_s=34.79 maxrss_kb=5772352`, 102 word errors and 122
 speaker-attributed errors (33.33%). It did not beat 58/366 and was not run
@@ -41,6 +46,9 @@ PY
 timeout 1800s /usr/bin/time -f 'elapsed_s=%e maxrss_kb=%M' uv run --extra multitalker python /tmp/probe_sortformer_activity.py 2>&1 | tee /tmp/en2002a-sortformer-activity.log
 for t in 0.3 0.5 0.7; do timeout 180s uv run python scripts/score-ami.py /ssd1/sichangheagent/private-artifacts/server-stt/independent-EN2002a-300-390/reference.tsv output/file-en2002a-sortformer21-activity-$t/transcript.json; done
 ```
+
+The model-load command printed
+`<class 'nemo.collections.asr.models.sortformer_diar_models.SortformerEncLabelModel'>`.
 
 Crop outputs were 54/366 at threshold 0.3, 60/366 at 0.5, and 61/366 at
 0.7. The 0.3 result beat 58/366, so it was run on whole ES2004a:
