@@ -6,3 +6,4 @@ uv pip install --python "$root/envs/diarizen/.venv/bin/python" --index-url https
 git -C "$root/envs/diarizen" clone https://github.com/BUTSpeechFIT/DiariZen.git src
 git -C "$root/envs/diarizen/src" checkout 844f555
 uv pip install --python "$root/envs/diarizen/.venv/bin/python" -e "$root/envs/diarizen/src"
+uv pip install --python "$root/envs/diarizen/.venv/bin/python" toml
