@@ -1,0 +1,9 @@
+[project]
+name = "server-stt-diarizen"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "torch==2.1.1",
+  "torchaudio==2.1.1",
+  "diarizen @ git+https://github.com/BUTSpeechFIT/DiariZen@844f555",
+]

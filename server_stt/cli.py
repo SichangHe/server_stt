@@ -179,7 +179,7 @@ def main() -> int:
     if args.diarization == "diarizen":
         import subprocess
         turns = [Turn(start_s=float(a), end_s=float(b), speaker=f"SPEAKER_{c}") for a, b, c in
-                 (line.split() for line in subprocess.check_output(["/tmp/dzvenv/bin/python", "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines())]
+                 (line.split() for line in subprocess.check_output([str(Path(__file__).parents[1] / "envs/diarizen/.venv/bin/python"), "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines())]
     elif args.diarization == "nemotron":
         from server_stt.diarization import diarize
 
