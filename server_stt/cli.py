@@ -226,7 +226,7 @@ def main() -> int:
 
         result = recognize_multitalker(
             audio,
-            native.turns,
+            turns,
             threads=args.threads,
             activity=native.probabilities if native is not None else None,
             activity_frame_s=native.frame_s if native is not None else None,
