@@ -30,7 +30,7 @@ def main() -> None:
         start, end, speaker = item.split()
         turns.append(DiarizationTurn(float(start), float(end), f"SPEAKER_{int(speaker.rsplit('_', 1)[1]) + 1:02d}"))
     activity = tensors[0].numpy().astype(np.float32).squeeze(0)
-    result = recognize(audio, turns, threads=8, chunk_s=120, activity=activity, activity_frame_s=len(audio) / 16000 / activity.shape[0], activity_threshold=0.3)
+    result = recognize(audio, turns, threads=8, chunk_s=90, activity=activity, activity_frame_s=len(audio) / 16000 / activity.shape[0], activity_threshold=0.3)
     assert not isinstance(result, str), result
     transcript = {
         "source": str(SOURCE),
