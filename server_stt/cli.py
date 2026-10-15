@@ -90,7 +90,7 @@ def main() -> int:
         "--recognizer", choices=["whisper", "qwen", "multitalker"], default="multitalker"
     )
     parser.add_argument(
-        "--diarization", choices=["sherpa", "nemotron"], default="nemotron"
+        "--diarization", choices=["sherpa", "nemotron", "diarizen"], default="diarizen"
     )
     parser.add_argument(
         "--diarization-model",
@@ -142,8 +142,8 @@ def main() -> int:
     if args.recognizer != "whisper" and args.device != "cpu":
         parser.error("The selected backend currently supports CPU only")
     if args.recognizer == "multitalker":
-        if args.diarization != "nemotron":
-            parser.error("Multitalker requires Nemotron speaker activity")
+        if args.diarization not in {"nemotron", "diarizen"}:
+            parser.error("Multitalker requires native or DiariZen speaker turns")
         if args.language is not None and args.language.lower() not in {"en", "english"}:
             parser.error("Multitalker supports English; select Qwen for other languages")
         activity_threshold = args.activity_threshold
@@ -176,7 +176,11 @@ def main() -> int:
         parser.error("Audio is empty")
     print("Finding speakers", file=sys.stderr)
     native = None
-    if args.diarization == "nemotron":
+    if args.diarization == "diarizen":
+        import subprocess
+        turns = [Turn(start_s=float(a), end_s=float(b), speaker=f"SPEAKER_{c}") for a, b, c in
+                 (line.split() for line in subprocess.check_output(["/tmp/dzvenv/bin/python", "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines())]
+    elif args.diarization == "nemotron":
         from server_stt.diarization import diarize
 
         native = diarize(audio, args.diarization_model, args.diarization_runtime)
@@ -216,13 +220,12 @@ def main() -> int:
     if args.recognizer == "multitalker":
         from server_stt.multitalker import recognize as recognize_multitalker
 
-        assert native is not None
         result = recognize_multitalker(
             audio,
             native.turns,
             threads=args.threads,
-            activity=native.probabilities,
-            activity_frame_s=native.frame_s,
+            activity=native.probabilities if native is not None else None,
+            activity_frame_s=native.frame_s if native is not None else None,
             activity_threshold=activity_threshold,
         )
         if isinstance(result, str):
