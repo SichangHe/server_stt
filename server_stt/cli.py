@@ -146,9 +146,7 @@ def main() -> int:
             parser.error("Multitalker requires Nemotron speaker activity")
         if args.language is not None and args.language.lower() not in {"en", "english"}:
             parser.error("Multitalker supports English; select Qwen for other languages")
-        activity_threshold = (
-            0.3 if args.activity_threshold is None else args.activity_threshold
-        )
+        activity_threshold = args.activity_threshold
     else:
         activity_threshold = None
     qwen_language = None

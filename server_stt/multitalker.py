@@ -41,7 +41,7 @@ def recognize(
     audio: NDArray[np.float32],
     turns: list[DiarizationTurn],
     threads: int = 8,
-    chunk_s: float = 120,
+    chunk_s: float = 90,
     activity: NDArray[np.float32] | None = None,
     activity_frame_s: float | None = None,
     activity_threshold: float | None = None,
@@ -57,8 +57,8 @@ def recognize(
         return "Multitalker needs finite mono float32 audio at 16 kHz"
     if not audio.size or threads < 1:
         return "Multitalker needs nonempty audio and positive thread count"
-    if not math.isfinite(chunk_s) or not 0 < chunk_s <= BATCH_AUDIO_S:
-        return f"Multitalker chunk duration must be in (0, {BATCH_AUDIO_S:g}] seconds"
+    if not math.isfinite(chunk_s) or not 0 < chunk_s <= 90:
+        return "Multitalker chunk duration must be in (0, 90] seconds"
     if activity_threshold is not None and (
         activity is None
         or activity_frame_s is None
