@@ -54,6 +54,8 @@ the requested second-meeting measurement cannot be run honestly until supplied.
 
 cause audit
 
+The NVIDIA Sortformer v2.1 probe was evaluated with threshold 0.3 selected on ES2004a and EN2002a. It scored 388/2518 (15.4%) on held-out TS3003a and 575/1986 (29.0%) on held-out IS1009a, worse than the file baseline 377/2518 and 543/1986. It was not adopted.
+
 IS1009a has 399 reference words overlapping a word from another speaker, out of
 2393 reference entries; TS3003a has 204/3014. Both transcripts infer four
 labels (IS1009a 208 turns, TS3003a 394 turns), matching the four annotated
