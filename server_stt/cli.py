@@ -178,8 +178,12 @@ def main() -> int:
     native = None
     if args.diarization == "diarizen":
         import subprocess
-        turns = [Turn(start_s=float(a), end_s=float(b), speaker=f"SPEAKER_{c}") for a, b, c in
-                 (line.split() for line in subprocess.check_output([str(Path(__file__).parents[1] / "envs/diarizen/.venv/bin/python"), "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines())]
+        turns = []
+        for line in subprocess.check_output([str(Path(__file__).parents[1] / "envs/diarizen/.venv/bin/python"), "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines():
+            fields = line.split()
+            if len(fields) == 3:
+                try: turns.append(Turn(start_s=float(fields[0]), end_s=float(fields[1]), speaker=f"SPEAKER_{fields[2]}"))
+                except ValueError: pass
     elif args.diarization == "nemotron":
         from server_stt.diarization import diarize
 
