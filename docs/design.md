@@ -4,7 +4,8 @@
 flow
 - validate input paths and new output directory
 - decode mono 16 kHz once with PyAV
-- infer overlapping turns with Nemotron
+- infer overlapping turns with DiariZen in its own environment
+  - `--diarization nemotron` uses native Nemotron turns instead
 - recognize each speaker with multitalker Parakeet conditioned on estimated activity
   - preserve target labels and native recognition-frame word times
   - independent 90-second chunks bound recognition memory

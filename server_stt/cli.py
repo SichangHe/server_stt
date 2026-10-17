@@ -122,7 +122,7 @@ def main() -> int:
     parser.add_argument(
         "--activity-threshold",
         type=float,
-        help="Nemotron posterior threshold for multitalker masks (default: 0.3)",
+        help="Nemotron posterior threshold for multitalker masks (default: hard turns)",
     )
     parser.add_argument("--prompt", help="Vocabulary/context hint for recognition")
     args = parser.parse_args()
@@ -179,7 +179,8 @@ def main() -> int:
     if args.diarization == "diarizen":
         import subprocess
         turns = []
-        for line in subprocess.check_output([str(Path(__file__).parents[1] / "envs/diarizen/.venv/bin/python"), "scripts/diarizen-turns.py", str(args.audio)], text=True).splitlines():
+        root = Path(__file__).parents[1]
+        for line in subprocess.check_output([str(root / "envs/diarizen/.venv/bin/python"), str(root / "scripts/diarizen-turns.py"), str(args.audio)], text=True).splitlines():
             fields = line.split()
             if len(fields) == 3:
                 try: turns.append(Turn(start_s=float(fields[0]), end_s=float(fields[1]), speaker=f"SPEAKER_{fields[2]}"))

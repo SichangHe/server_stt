@@ -2,8 +2,8 @@
 (authored by agents unless marked 🧑)
 
 estimated speaker activity
-- native Nemotron turns define target and competing-speaker masks at encoder frame times
-- file recognition thresholds Nemotron posterior activity at 0.3; live recognition uses its settled hard turns
+- DiariZen turns (file default) or Nemotron turns define target and competing-speaker masks at encoder frame times
+- masks are hard turns; `--activity-threshold` thresholds Nemotron posteriors instead, file only; live uses settled Nemotron turns
 - overlapping turns activate both masks
 - recognize each estimated speaker separately from the same mono recording
   - batch row = target speaker; texts matched one-by-one passes in six timing runs

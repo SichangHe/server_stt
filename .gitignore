@@ -4,3 +4,4 @@ __pycache__/
 models/
 output/
 *.egg-info/
+envs/diarizen/src/

@@ -1,7 +1,7 @@
 # Models and provenance
 (authored by agents unless marked 🧑)
 
-The default CPU pipeline is described in [multitalker recognition](multitalker.md) and [native diarization](native-diarization.md). [Qwen recognition](qwen-recognition.md) supports other languages. The Whisper/Sherpa models below are the optional legacy pipeline.
+File speaker turns default to [DiariZen](https://github.com/BUTSpeechFIT/DiariZen) at commit `844f555` with model `BUT-FIT/diarizen-wavlm-large-s80-md`. Its README says the code is MIT and “The **pre-trained model weights** are released under the [CC BY-NC 4.0] license”; its model card says it was trained on data “including AMI”. Nemotron and the rest of the pipeline are described in [multitalker recognition](multitalker.md) and [native diarization](native-diarization.md). [Qwen recognition](qwen-recognition.md) supports other languages. The Whisper/Sherpa models below are the optional legacy pipeline.
 
 The [official Sherpa Python example](https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/offline-speaker-diarization.py) says “Step 1: Download a speaker segmentation model” and names `sherpa-onnx-pyannote-segmentation-3-0.tar.bz2`. Setup uses that archive and the same project's public `wespeaker_en_voxceleb_resnet34.onnx` release. `server-stt-models` verifies hashes recorded in `server_stt/models.py`.
 

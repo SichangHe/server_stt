@@ -1,6 +1,17 @@
 # Validation
 (authored by agents unless marked 🧑)
 
+Current default (DiariZen turns, 90-second hard-turn masks), measured on 17 Oct 2026 from a fresh clone after `uv sync --locked --extra multitalker` and `sh scripts/setup-diarizen.sh`, with the normal `server-stt` command and `scripts/score-ami.py`. Speaker-attributed errors, previous Nemotron default in parentheses:
+
+- IS1009a, whole: 340/1986 (543)
+- TS3003a, whole: 398/2518 (377)
+- ES2004a, whole MP3: 402/2614 (391)
+- EN2002a 300–390 s: 63/366 (66); the same with the GPU hidden, 173 s wall
+
+IS1009a and TS3003a were not used to choose settings in this repository. DiariZen's model card says its training data includes AMI, the corpus of all four meetings; whether these meetings were excluded is unverified. DiariZen used the GPU in these runs; four runs at once ran out of GPU memory.
+
+Earlier defaults, kept as history:
+
 The English default now uses multitalker Parakeet conditioned on estimated Nemotron speaker activity. Real CLI runs with pinned Torch 2.9.1 CPU produced 31/212 speaker-attributed word errors (14.6%) on ES2004a seconds 300–390 and 27/238 (11.3%) on ES2004a seconds 600–690. No reference words or speaker labels entered inference. These are gains over Qwen's 44/212 and 46/238, but substantial errors remain. The earlier Torch 2.14 component experiment had one fewer error on the second crop; published results use the actual CLI installation.
 
 The actual multitalker CLI on independent EN2002a seconds 300–390 produced 66/366 speaker-attributed errors (18.0%), versus Qwen's 97/366 (26.5%). Across all three crops, errors fell from 187/816 (22.9%) to 124/816 (15.2%). Chronological word-only errors were 41/212, 37/238, and 93/366; that ordering can penalize different serialization of simultaneous words, so cpWER is the primary delivered-speaker-text comparison. The earlier Torch 2.14 component run produced 61 errors on the independent crop; this is not the installed CLI result.
