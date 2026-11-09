@@ -5,3 +5,4 @@ models/
 output/
 *.egg-info/
 envs/diarizen/src/
+fixtures/

@@ -10,6 +10,14 @@ Current default (DiariZen turns, 90-second hard-turn masks), measured on 17 Oct 
 
 IS1009a and TS3003a were not used to choose settings in this repository. DiariZen's model card says its training data includes AMI, the corpus of all four meetings; whether these meetings were excluded is unverified. DiariZen used the GPU in these runs; four runs at once ran out of GPU memory.
 
+GPU execution, 9 Nov 2026 (real CLI, default DiariZen + multitalker, whole-meeting MP3, `--device auto` resolving to cuda on one RTX A6000 shared with other jobs; scorer `scripts/score-meeting.py`, reference from `scripts/ami-meeting.py`):
+
+- ES2004a (1049 s): cpWER 0.1538 (402/2614), speaker-blind WER 0.1756, DER 0.2128; 182.1 s wall, 3.9 GB peak RSS. Equals the earlier CPU figure (402/2614); not rerun on CPU.
+- IS1009a (839 s): cpWER 0.2145 (426/1986), DER 0.1466; 92.2 s wall. CPU rerun the same day, `--device cpu --threads 16`, on a loaded server (load average about 70): identical cpWER 0.2145 and DER 0.1466, 1233.7 s wall, 12.8 GB peak RSS (13x slower). The 340/1986 above is an earlier figure that the same-day rerun did not reproduce; the cause is unknown (scorer normalisation or crop handling differ).
+- EN2002a (2143 s, heavy overlap): cpWER 0.2598 (1953/7516), DER 0.2920; 190.0 s wall. No earlier whole-meeting CPU figure; not rerun on CPU.
+
+DER is approximate: the reference is word intervals bridged over gaps under 0.5 s, collar 0.25 s, not official AMI RTTM. AMI is in DiariZen's training data, so these are not held-out. A prototype (DiariZen + per-speaker Parakeet-TDT, since deleted) scored cpWER 0.2104, 0.2442 and 0.3417 on the same three meetings; multitalker is better on all three.
+
 Earlier defaults, kept as history:
 
 The English default now uses multitalker Parakeet conditioned on estimated Nemotron speaker activity. Real CLI runs with pinned Torch 2.9.1 CPU produced 31/212 speaker-attributed word errors (14.6%) on ES2004a seconds 300–390 and 27/238 (11.3%) on ES2004a seconds 600–690. No reference words or speaker labels entered inference. These are gains over Qwen's 44/212 and 46/238, but substantial errors remain. The earlier Torch 2.14 component experiment had one fewer error on the second crop; published results use the actual CLI installation.

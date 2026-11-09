@@ -1,4 +1,4 @@
-"""CPU target-speaker recognition conditioned on estimated overlapping turns."""
+"""Target-speaker recognition conditioned on estimated overlapping turns."""
 
 import math
 from dataclasses import dataclass
@@ -45,6 +45,7 @@ def recognize(
     activity: NDArray[np.float32] | None = None,
     activity_frame_s: float | None = None,
     activity_threshold: float | None = None,
+    device: str = "cpu",
 ) -> MultitalkerResult | str:
     """Recognize each speaker using target and competing-speaker activity.
 
@@ -93,7 +94,7 @@ def recognize(
                 return "Multitalker posterior masks have too few speaker columns"
     if not turns:
         return MultitalkerResult([])
-    model = load(threads)
+    model = load(threads, device)
     if isinstance(model, str):
         return model
     chunk_samples = max(1, round(chunk_s * 16000))
@@ -118,8 +119,8 @@ def recognize(
     )
 
 
-def load(threads: int) -> "EncDecMultiTalkerRNNTBPEModel | str":
-    """Restore the pinned checkpoint on CPU with timestamped greedy decoding."""
+def load(threads: int, device: str = "cpu") -> "EncDecMultiTalkerRNNTBPEModel | str":
+    """Restore the pinned checkpoint on `device` ("cpu" or "cuda") with timestamped greedy decoding."""
     try:
         import torch
         from huggingface_hub import hf_hub_download
@@ -137,10 +138,10 @@ def load(threads: int) -> "EncDecMultiTalkerRNNTBPEModel | str":
     torch.set_num_threads(threads)
     try:
         checkpoint = hf_hub_download(MODEL, CHECKPOINT, revision=REVISION)
-        restored = ASRModel.restore_from(checkpoint, map_location=torch.device("cpu"))
+        restored = ASRModel.restore_from(checkpoint, map_location=torch.device(device))
         if not isinstance(restored, EncDecMultiTalkerRNNTBPEModel):
             return "Multitalker checkpoint has an unexpected model architecture"
-        model = restored.to("cpu").eval()
+        model = restored.to(device).eval()
         model.change_decoding_strategy(
             OmegaConf.create(
                 {
@@ -197,11 +198,12 @@ def recognize_chunk(
     words: list[SpeakerWord] = []
     try:
         with torch.inference_mode():
-            signal = torch.from_numpy(chunk).unsqueeze(0)
-            length = torch.tensor([chunk.size])
+            dev = next(model.parameters()).device
+            signal = torch.from_numpy(chunk).unsqueeze(0).to(dev)
+            length = torch.tensor([chunk.size], device=dev)
             _, processed_length = model.preprocessor(input_signal=signal, length=length)
             n_frames = math.ceil(int(processed_length[0]) / subsampling_factor)
-            frame_times = torch.arange(n_frames) * frame_s + offset_s
+            frame_times = torch.arange(n_frames, dtype=torch.float32) * frame_s + offset_s
             if activity_threshold is None:
                 masks = torch.zeros((len(labels), n_frames), dtype=torch.float32)
                 for index, label in enumerate(labels):
@@ -242,7 +244,7 @@ def recognize_chunk(
             for first in range(0, len(targets), n_rows):
                 rows = targets[first : first + n_rows]
                 model.set_speaker_targets(
-                    masks[rows], background[first : first + n_rows]
+                    masks[rows].to(dev), background[first : first + n_rows].to(dev)
                 )
                 encoded, encoded_length = model.forward(
                     input_signal=signal.repeat(len(rows), 1),

@@ -103,7 +103,8 @@ def main() -> int:
         default=Path("models/nemo-speech-0.2.0-linux-x86_64-cpu"),
     )
     parser.add_argument("--model", default="large-v3", help="Whisper model")
-    parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto",
+                        help="auto: cuda if visible; applies to DiariZen, multitalker and Whisper")
     parser.add_argument("--compute-type", default="int8", help="Whisper precision")
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument(
@@ -126,6 +127,14 @@ def main() -> int:
     )
     parser.add_argument("--prompt", help="Vocabulary/context hint for recognition")
     args = parser.parse_args()
+    if args.device == "auto" and args.recognizer != "multitalker":
+        args.device = "cpu"
+    if args.device == "auto":
+        try:
+            import torch
+            args.device = "cuda" if torch.cuda.is_available() else "cpu"
+        except ImportError:
+            args.device = "cpu"
     paths = [args.audio]
     if args.diarization == "sherpa":
         if args.segmentation is None or args.embedding is None:
@@ -139,8 +148,8 @@ def main() -> int:
         parser.error("--prompt applies only to Whisper")
     if args.activity_threshold is not None and args.recognizer != "multitalker":
         parser.error("--activity-threshold applies only to multitalker")
-    if args.recognizer != "whisper" and args.device != "cpu":
-        parser.error("The selected backend currently supports CPU only")
+    if args.recognizer == "qwen" and args.device != "cpu":
+        parser.error("Qwen currently supports CPU only")
     if args.recognizer == "multitalker":
         if args.diarization not in {"nemotron", "diarizen"}:
             parser.error("Multitalker requires native or DiariZen speaker turns")
@@ -180,7 +189,9 @@ def main() -> int:
         import subprocess
         turns = []
         root = Path(__file__).parents[1]
-        for line in subprocess.check_output([str(root / "envs/diarizen/.venv/bin/python"), str(root / "scripts/diarizen-turns.py"), str(args.audio)], text=True).splitlines():
+        import os
+        dz_env = {**os.environ, **({"CUDA_VISIBLE_DEVICES": ""} if args.device == "cpu" else {})}
+        for line in subprocess.check_output([str(root / "envs/diarizen/.venv/bin/python"), str(root / "scripts/diarizen-turns.py"), str(args.audio)], text=True, env=dz_env).splitlines():
             fields = line.split()
             if len(fields) == 3:
                 try: turns.append(Turn(start_s=float(fields[0]), end_s=float(fields[1]), speaker=f"SPEAKER_{fields[2]}"))
@@ -232,6 +243,7 @@ def main() -> int:
             activity=native.probabilities if native is not None else None,
             activity_frame_s=native.frame_s if native is not None else None,
             activity_threshold=activity_threshold,
+            device=args.device,
         )
         if isinstance(result, str):
             parser.error(result)
