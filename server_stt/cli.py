@@ -90,12 +90,13 @@ def main() -> int:
         "--recognizer", choices=["whisper", "qwen", "multitalker"], default="multitalker"
     )
     parser.add_argument(
-        "--diarization", choices=["sherpa", "nemotron", "diarizen"], default="diarizen"
+        "--diarization", choices=["sherpa", "nemotron", "diarizen"], default="nemotron"
     )
     parser.add_argument(
         "--diarization-model",
         type=Path,
-        default=Path("models/Nemotron-3-Diarization.q8_0.gguf"),
+        default=None,
+        help="Nemotron GGUF (default: pinned download via the Hugging Face cache)",
     )
     parser.add_argument(
         "--diarization-runtime",
@@ -123,11 +124,11 @@ def main() -> int:
     parser.add_argument(
         "--activity-threshold",
         type=float,
-        help="Nemotron posterior threshold for multitalker masks (default: hard turns)",
+        help="Nemotron posterior threshold for multitalker masks (default 0.3 with nemotron)",
     )
     parser.add_argument("--prompt", help="Vocabulary/context hint for recognition")
     args = parser.parse_args()
-    if args.device == "auto" and args.recognizer != "multitalker":
+    if args.device == "auto" and args.recognizer not in {"multitalker", "qwen"}:
         args.device = "cpu"
     if args.device == "auto":
         try:
@@ -148,14 +149,14 @@ def main() -> int:
         parser.error("--prompt applies only to Whisper")
     if args.activity_threshold is not None and args.recognizer != "multitalker":
         parser.error("--activity-threshold applies only to multitalker")
-    if args.recognizer == "qwen" and args.device != "cpu":
-        parser.error("Qwen currently supports CPU only")
     if args.recognizer == "multitalker":
         if args.diarization not in {"nemotron", "diarizen"}:
             parser.error("Multitalker requires native or DiariZen speaker turns")
         if args.language is not None and args.language.lower() not in {"en", "english"}:
             parser.error("Multitalker supports English; select Qwen for other languages")
         activity_threshold = args.activity_threshold
+        if activity_threshold is None and args.diarization == "nemotron":
+            activity_threshold = 0.3
     else:
         activity_threshold = None
     qwen_language = None
@@ -199,7 +200,12 @@ def main() -> int:
     elif args.diarization == "nemotron":
         from server_stt.diarization import diarize
 
-        native = diarize(audio, args.diarization_model, args.diarization_runtime)
+        from server_stt.diarization_models import model_path
+
+        model = args.diarization_model or model_path()
+        if isinstance(model, str):
+            parser.error(model)
+        native = diarize(audio, model, args.diarization_runtime)
         if isinstance(native, str):
             parser.error(native)
         turns = [
@@ -265,6 +271,7 @@ def main() -> int:
             audio,
             language=qwen_language,
             threads=args.threads,
+            device=args.device,
         )
         if isinstance(result, str):
             parser.error(result)

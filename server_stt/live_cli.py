@@ -60,7 +60,8 @@ def main() -> int:
     p.add_argument(
         "--diarization-model",
         type=Path,
-        default=Path("models/Nemotron-3-Diarization.q8_0.gguf"),
+        default=None,
+        help="Nemotron GGUF (default: pinned download via the Hugging Face cache)",
     )
     p.add_argument(
         "--diarization-runtime",
@@ -87,8 +88,13 @@ def main() -> int:
     model = load(a.threads)
     if isinstance(model, str):
         return fail(model)
+    from server_stt.diarization_models import model_path
+
+    diarization_model = a.diarization_model or model_path()
+    if isinstance(diarization_model, str):
+        return fail(diarization_model)
     diarization = DiarizationStream.open(
-        a.diarization_model, a.diarization_runtime, DIARIZATION_CHUNK_FRAMES
+        diarization_model, a.diarization_runtime, DIARIZATION_CHUNK_FRAMES
     )
     if isinstance(diarization, str):
         return fail(diarization)

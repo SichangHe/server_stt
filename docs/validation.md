@@ -18,6 +18,17 @@ GPU execution, 9 Nov 2026 (real CLI, default DiariZen + multitalker, whole-meeti
 
 DER is approximate: the reference is word intervals bridged over gaps under 0.5 s, collar 0.25 s, not official AMI RTTM. AMI is in DiariZen's training data, so these are not held-out. A prototype (DiariZen + per-speaker Parakeet-TDT, since deleted) scored cpWER 0.2104, 0.2442 and 0.3417 on the same three meetings; multitalker is better on all three.
 
+Open-license diarizer comparison, 10 Nov 2026 (whole-meeting MP3, GPU multitalker, same scorer `scripts/score-meeting.py`, reference from `scripts/ami-meeting.py`; one run each; DER approximate as described below). cpWER / DER. DiariZen is the figure above; Nemotron is the default CLI with `--activity-threshold 0.3` (hard turns in parentheses); Sortformer from `scripts/sortformer-meeting.py` with the same two mask modes.
+
+- DiariZen (weights CC BY-NC 4.0, not commercial): ES2004a 0.1538 / 0.2128; IS1009a 0.2145 / 0.1466; EN2002a 0.2598 / 0.2920
+- Nemotron-3 Diarization (OpenMDW-1.1, commercial use allowed): ES2004a 0.1201 (0.1484) / 0.1359; IS1009a 0.2175 (0.2613) / 0.1122; EN2002a 0.2181 (0.2319) / 0.1886
+- Sortformer 4spk v2.1 (NVIDIA Open Model License): ES2004a 0.2995 (0.2930) / 0.3616; IS1009a 0.3359 (0.3026) / 0.1920; EN2002a 0.2251 (0.2328) / 0.2929
+- Sortformer 4spk v2 (CC-BY-4.0): ES2004a 0.1423 (0.1503) / 0.2243; IS1009a 0.3656 (0.3510) / 0.3132; EN2002a 0.2319 (0.2350) / 0.2666
+
+Decision: Nemotron with threshold 0.3 is the default. It beats DiariZen on ES2004a and EN2002a and is 0.003 worse on IS1009a. pyannote community-1 and 3.1 were not measured: their gated terms are not accepted on the Hugging Face account. Not measured, not claimed: held-out status (AMI is in some models' training data).
+
+Recognizer comparison, same meetings, Nemotron turns, threshold-free Qwen word-to-turn speaker assignment on the GPU (`--recognizer qwen --device cuda`), cpWER vs multitalker Parakeet: ES2004a 0.2223 vs 0.1201; IS1009a 0.2905 vs 0.2175; EN2002a 0.3528 vs 0.2181. Qwen3-ASR-1.7B is clearly worse here, so multitalker Parakeet stays the default. Qwen wall time 238 s, 141 s, 487 s.
+
 Earlier defaults, kept as history:
 
 The English default now uses multitalker Parakeet conditioned on estimated Nemotron speaker activity. Real CLI runs with pinned Torch 2.9.1 CPU produced 31/212 speaker-attributed word errors (14.6%) on ES2004a seconds 300–390 and 27/238 (11.3%) on ES2004a seconds 600–690. No reference words or speaker labels entered inference. These are gains over Qwen's 44/212 and 46/238, but substantial errors remain. The earlier Torch 2.14 component experiment had one fewer error on the second crop; published results use the actual CLI installation.

@@ -7,12 +7,11 @@
 
 ```sh
 uv sync --locked --extra multitalker
-sh scripts/setup-diarizen.sh
 uv run --extra multitalker server-stt-diarization-models models
 uv run --extra multitalker server-stt recording.mp3 --output output/recording --language en
 ```
 
-The default English pipeline finds speaker turns with DiariZen, then runs multitalker Parakeet in independent 90-second CPU chunks conditioned on those turns. Multitalker and DiariZen use the GPU when one is visible (`--device auto`, default; `--device cpu` forces CPU, 13x slower in the measured run). DiariZen runs in its own environment under `envs/diarizen`, built by `scripts/setup-diarizen.sh`; it uses a visible CUDA GPU and otherwise the CPU. Its model weights are licensed CC BY-NC 4.0, non-commercial use only. `--diarization nemotron` selects the previous Nemotron-3 turns, which need the `server-stt-diarization-models` download. It recognizes each speaker separately, including overlapping voices, and returns native word timestamps. Setup requires Linux x86_64; first recognition downloads several gigabytes. Speaker count is inferred, up to eight speakers. Each output directory must be new to avoid replacing previous results. Meeting accuracy is still being improved; the measured limitations are in [validation](docs/validation.md).
+The default English pipeline finds speakers with Nemotron-3 Diarization (OpenMDW-1.1, commercial use allowed), then runs multitalker Parakeet in independent 90-second CPU chunks conditioned on those turns. Multitalker uses the GPU when one is visible (`--device auto`, default; `--device cpu` forces CPU, 13x slower in the measured run). `--diarization diarizen` selects DiariZen, which is slightly less accurate on two of three measured meetings and whose model weights are licensed CC BY-NC 4.0 (non-commercial only); it runs in its own environment built by `sh scripts/setup-diarizen.sh`. Models download through the Hugging Face cache and honour `HF_HUB_CACHE` and `HF_HOME` (default `~/.cache/huggingface/hub`). It recognizes each speaker separately, including overlapping voices, and returns native word timestamps. Setup requires Linux x86_64; first recognition downloads several gigabytes. Speaker count is inferred, up to eight speakers. Each output directory must be new to avoid replacing previous results. Meeting accuracy is still being improved; the measured limitations are in [validation](docs/validation.md).
 
 Output includes `transcript.txt` and `transcript.json`. JSON preserves speaker turn intervals independently from word labels, including overlapping turns. Multitalker recognition retains the target speaker label for each word; timestamps estimate recognition frames rather than exact acoustic boundaries. Qwen/Whisper use Nemotron mean speaker probabilities or Sherpa turn overlap. Labels describe voices, not identified people. Review the audio before trusting names, numbers, technical terms, and simultaneous speech.
 
@@ -31,3 +30,7 @@ ffmpeg -v error -i meeting.mp3 -ac 1 -ar 16000 -f s16le - | uv run --extra multi
 ```
 
 See [live design](docs/live.md) and its measured accuracy and delay in [validation](docs/validation.md).
+
+## License
+
+[UPL-1.0](LICENSE). Model licenses are separate: see [models](docs/models.md).

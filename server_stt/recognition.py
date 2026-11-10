@@ -76,6 +76,7 @@ def recognize(
     language: str | None = None,
     threads: int = 8,
     chunk_s: float = 20,
+    device: str = "cpu",
 ) -> RecognitionResult | str:
     """Align only recognized text, preserving unknown word confidence.
 
@@ -101,11 +102,11 @@ def recognize(
         model = Qwen3ASRModel.from_pretrained(
             model_path,
             dtype=torch.float32,
-            device_map="cpu",
+            device_map=device,
             max_inference_batch_size=1,
             max_new_tokens=1024,
             forced_aligner=aligner_path,
-            forced_aligner_kwargs={"dtype": torch.float32, "device_map": "cpu"},
+            forced_aligner_kwargs={"dtype": torch.float32, "device_map": device},
         )
         words: list[RecognitionWord] = []
         detected_languages: list[str] = []
